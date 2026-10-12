@@ -16,14 +16,30 @@ A simple program that applies a color gradient to text using as little code as p
 ### Compilation
 
 **Unix-like systems (Linux, macOS):**
-
-    gcc gradientmaker.c -o gradientmaker -lm
+```bash
+gcc gradientmaker.c -o gradientmaker -lm
+```
 
 **Windows:**
+```bash
+gcc gradientmaker.c -o gradientmaker.exe -lm
+```
 
-    gcc gradientmaker.c -o gradientmaker.exe -lm
+## Usage as library
+![module](./images/module.png)
 
-### Running
+*See [guide](./module/usage.c) how to use this library*
+### Compilation
+**Unix-like systems (Linux, macOS):**
+```bash
+gcc yourProject.c gradientMaker.c -o yourProject -lm
+```
+**Windows:**
+```bash
+gcc yourProject.c gradientMaker.c -o yourProject.exe -lm
+```
+
+## Running
 
 **Unix-like systems (Linux, macOS):**
 
@@ -32,3 +48,6 @@ A simple program that applies a color gradient to text using as little code as p
 **Windows:**
 
     gradientmaker.exe
+
+#### NOTE:
+This project is still work in progress. I'm learning C, so bugs and improvements are expected. Contributions and feedback are welcome!

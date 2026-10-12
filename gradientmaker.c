@@ -1,20 +1,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include <stdlib.h>
 #include <math.h>
 
-struct RGB {
-    int red;
-    int green;
-    int blue;
-};
-
-int checkHEX(char *hex); // Check HEX code for validation, return 1 if valid hex code
-void HEXtoRGB(char *hex, struct RGB *color); // Convert HEX code to RGB
-void RGBtoHEX(struct RGB *color, char *hex); // Convert RGB code to HEX
-void interpolate(struct RGB *colors, char *text); // Create in-between colors
-void render(struct RGB *colors, char *text); // Output text with gradient
+int checkHEX(char *hex); // Check HEX code for validation, return 0 if valid hex code
+void HEXtoRGB(char *hex, int *rgb); // Convert HEX code to RGB
+void RGBtoHEX(int *rgb, char *hex); // Convert RGB code to HEX
+void interpolate(int colors[][3], char *text); // Create in-between colors
+void render(int colors[][3], char *text); // Output text with gradient
 
 int main() {
     // Request data to work with
@@ -34,7 +27,7 @@ int main() {
             continue;
         }
 
-        if (!checkHEX(firstHEX)) {
+        if (checkHEX(firstHEX)) {
             printf("Invalid hex code was given! Example: FF12AB; 127bae\n");
             continue;
         }
@@ -58,18 +51,12 @@ int main() {
             continue;
         }
 
-        if (!checkHEX(secondHEX)) {
+        if (checkHEX(secondHEX)) {
             printf("Invalid hex code was given! Example: FF12AB; 127bae\n");
             continue;
         }
         break;
     } while (1);
-    // Convert HEX to RGB
-    struct RGB firstRGB = {0, 0, 0};
-    HEXtoRGB(firstHEX, &firstRGB);
-
-    struct RGB secondRGB = {0, 0, 0};
-    HEXtoRGB(secondHEX, &secondRGB);
 
     // Request text
     c = 0;
@@ -86,9 +73,9 @@ int main() {
     int textLength = strlen(text);
 
     // Create list of colors to interpolate
-    struct RGB *colors = malloc(textLength);
-    colors[0] = firstRGB;
-    colors[textLength-1] = secondRGB;
+    int colors[textLength][3] = {};
+    HEXtoRGB(firstHEX, colors[0]);
+    HEXtoRGB(secondHEX, colors[textLength-1]);
     interpolate(colors, text);
 
     // Render text with applied gradient
@@ -100,7 +87,7 @@ int main() {
 int checkHEX(char *hex) {
     char hexValues[] = "0123456789abcdef";
     if (strlen(hex) != 6) {
-        return 0;
+        return 1;
     }
     for (int num = 0; num < strlen(hex); num++) {
         int broke = 0;
@@ -110,83 +97,67 @@ int checkHEX(char *hex) {
             }
         }
         if (!broke) {
-            return 0;
+            return 1;
         }
     }
 
-    return 1;
+    return 0;
 }
-void HEXtoRGB(char *hex, struct RGB *color) {
+int HEXvaltoNum(char hex) {
+   return (toupper(hex) == 'A') ? 10 :
+          (toupper(hex) == 'B') ? 11 :
+          (toupper(hex) == 'C') ? 12 :
+          (toupper(hex) == 'D') ? 13 :
+          (toupper(hex) == 'E') ? 14 : 15;
+}
+void HEXtoRGB(char *hex, int *rgb) {
     for (int i = 0; i < 5; i+=2) {
         if (i == 0) {
+            // RED
             if (isdigit(hex[i])) {
-                color->red += 16*(hex[i] - '0');
+                rgb[0] += 16*(hex[i]-'0');
             } else {
-                color->red += 16*((toupper(hex[i]) == 'A') ? 10 :
-                                  (toupper(hex[i]) == 'B') ? 11 :
-                                  (toupper(hex[i]) == 'C') ? 12 :
-                                  (toupper(hex[i]) == 'D') ? 13 :
-                                  (toupper(hex[i]) == 'E') ? 14 : 15);
+                rgb[0] += 16*HEXvaltoNum(hex[i]);
             }
 
             if (isdigit(hex[i+1])) {
-                color->red += hex[i+1] - '0';
+                rgb[0] += hex[i+1]-'0';
             } else {
-                color->red += (toupper(hex[i+1]) == 'A') ? 10 :
-                              (toupper(hex[i+1]) == 'B') ? 11 :
-                              (toupper(hex[i+1]) == 'C') ? 12 :
-                              (toupper(hex[i+1]) == 'D') ? 13 :
-                              (toupper(hex[i+1]) == 'E') ? 14 : 15;
+                rgb[0] += HEXvaltoNum(hex[i+1]);
             }
-            continue;
         } else if (i == 2) {
+            // GREEN
             if (isdigit(hex[i])) {
-                color->green += 16*(hex[i] - '0');
+                rgb[1] += 16*(hex[i]-'0');
             } else {
-                color->green += 16*((toupper(hex[i]) == 'A') ? 10 :
-                                    (toupper(hex[i]) == 'B') ? 11 :
-                                    (toupper(hex[i]) == 'C') ? 12 :
-                                    (toupper(hex[i]) == 'D') ? 13 :
-                                    (toupper(hex[i]) == 'E') ? 14 : 15);
+                rgb[1] += 16*HEXvaltoNum(hex[i]);
             }
 
             if (isdigit(hex[i+1])) {
-                color->green += hex[i+1] - '0';
+                rgb[1] += hex[i+1]-'0';
             } else {
-                color->green += (toupper(hex[i+1]) == 'A') ? 10 :
-                                (toupper(hex[i+1]) == 'B') ? 11 :
-                                (toupper(hex[i+1]) == 'C') ? 12 :
-                                (toupper(hex[i+1]) == 'D') ? 13 :
-                                (toupper(hex[i+1]) == 'E') ? 14 : 15;
+                rgb[1] += HEXvaltoNum(hex[i+1]);
             }
-            continue;
         } else if (i == 4) {
+            // BLUE
             if (isdigit(hex[i])) {
-                color->blue += 16*(hex[i] - '0');
+                rgb[2] += 16*(hex[i]-'0');
             } else {
-                color->blue += 16*((toupper(hex[i]) == 'A') ? 10 :
-                                   (toupper(hex[i]) == 'B') ? 11 :
-                                   (toupper(hex[i]) == 'C') ? 12 :
-                                   (toupper(hex[i]) == 'D') ? 13 :
-                                   (toupper(hex[i]) == 'E') ? 14 : 15);
+                rgb[2] += 16*HEXvaltoNum(hex[i]);
             }
 
             if (isdigit(hex[i+1])) {
-                color->blue += hex[i+1] - '0';
+                rgb[2] += hex[i+1]-'0';
             } else {
-                color->blue += (toupper(hex[i+1]) == 'A') ? 10 :
-                               (toupper(hex[i+1]) == 'B') ? 11 :
-                               (toupper(hex[i+1]) == 'C') ? 12 :
-                               (toupper(hex[i+1]) == 'D') ? 13 :
-                               (toupper(hex[i+1]) == 'E') ? 14 : 15;
+                rgb[2] += HEXvaltoNum(hex[i+1]);
             }
         }
     }
 }
-void RGBtoHEX(struct RGB *color, char *hex) {
-    int red = color->red / 16;
-    int green = color->green / 16;
-    int blue = color->blue / 16;
+void RGBtoHEX(int *rgb, char *hex) {
+    int red = rgb[0] / 16;
+    int green = rgb[1] / 16;
+    int blue = rgb[2] / 16;
     if (red >= 10) {
         hex[0] = (red == 10) ? 'A' :
                  (red == 11) ? 'B' :
@@ -196,7 +167,7 @@ void RGBtoHEX(struct RGB *color, char *hex) {
     } else {
         hex[0] = red + '0';
     }
-    red = color->red - (16 * red);
+    red = rgb[0] - (16 * red);
     if (red >= 10) {
         hex[1] = (red == 10) ? 'A' :
                  (red == 11) ? 'B' :
@@ -216,7 +187,7 @@ void RGBtoHEX(struct RGB *color, char *hex) {
     } else {
         hex[2] = green + '0';
     }
-    green = color->green - (16 * green);
+    green = rgb[1] - (16 * green);
     if (green >= 10) {
         hex[3] = (green == 10) ? 'A' :
                  (green == 11) ? 'B' :
@@ -236,7 +207,7 @@ void RGBtoHEX(struct RGB *color, char *hex) {
     } else {
         hex[4] = blue + '0';
     }
-    blue = color->blue - (16 * blue);
+    blue = rgb[2] - (16 * blue);
     if (blue >= 10) {
         hex[5] = (blue == 10) ? 'A' :
                  (blue == 11) ? 'B' :
@@ -248,7 +219,7 @@ void RGBtoHEX(struct RGB *color, char *hex) {
     }
     hex[6] = '\0';
 }
-void interpolate(struct RGB *colors, char *text) {
+void interpolate(int colors[][3], char *text) {
     int textLength = strlen(text);
     double firstAmp = 1;
     double secondAmp = 0;
@@ -256,22 +227,21 @@ void interpolate(struct RGB *colors, char *text) {
         firstAmp -= 1.0 / (textLength - 1);
         secondAmp += 1.0 / (textLength - 1);
         // Interpolation formula: ((color1 * firstAmp) + (color2 * secondAmp))
-        int red = round((((double)colors[0].red * firstAmp) + ((double)colors[textLength-1].red * secondAmp)));
-        int green = round((((double)colors[0].green * firstAmp) + ((double)colors[textLength-1].green * secondAmp)));
-        int blue = round((((double)colors[0].blue * firstAmp) + ((double)colors[textLength-1].blue * secondAmp)));
-        colors[i] = (struct RGB){red, green, blue};
+        for (int j = 0; j < 3; j++) {
+            colors[i][j] = round((((double)colors[0][j] * firstAmp) + ((double)colors[textLength-1][j] * secondAmp)));
+        }
     }
 }
-void render(struct RGB *colors, char *text) {
+void render(int colors[][3], char *text) {
     for (int i = 0; i < strlen(text); i++) {
-        printf("\033[38;2;%d;%d;%dm%c", colors[i].red, colors[i].green, colors[i].blue, text[i]);
+        printf("\033[38;2;%d;%d;%dm%c", colors[i][0], colors[i][1], colors[i][2], text[i]);
     }
     printf("\033[0m\n");
 
     for (int i = 0; i < strlen(text); i++) {
         char hex[7] = "0";
-        RGBtoHEX(&colors[i], hex);
+        RGBtoHEX(colors[i], hex);
         printf("\033[38;2;%d;%d;%dm%c\033[0m -> (\033[38;2;%d;0;0m%d\033[0m, \033[38;2;0;%d;0m%d\033[0m, \033[38;2;0;0;%dm%d\033[0m) / #\033[38;2;%d;%d;%dm%s\033[0m\n",
-               colors[i].red, colors[i].green, colors[i].blue, text[i], colors[i].red, colors[i].red, colors[i].green, colors[i].green, colors[i].blue, colors[i].blue, colors[i].red, colors[i].green, colors[i].blue, hex);
+               colors[i][0], colors[i][1], colors[i][2], text[i], colors[i][0], colors[i][0], colors[i][1], colors[i][1], colors[i][2], colors[i][2], colors[i][0], colors[i][1], colors[i][2], hex);
     }
 }
